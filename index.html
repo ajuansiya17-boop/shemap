@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SheMap — Women's Toilet Locator & Cleanliness Tracker</title>
+  <meta name="description"
+    content="SheMap helps women find clean, safe restrooms nearby. A hackathon prototype for women's toilet locator and cleanliness tracker." />
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <!-- Google Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ═══════════════════════════════════════════════
+       SheMap — Styles
+       ═══════════════════════════════════════════════ */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --clr-primary: #7C3AED;
+      --clr-primary-light: #A78BFA;
+      --clr-primary-dark: #5B21B6;
+      --clr-accent: #EC4899;
+      --clr-bg: #0F0D1A;
+      --clr-surface: #1A1726;
+      --clr-surface-2: #252236;
+      --clr-surface-3: #302C42;
+      --clr-text: #F0ECF9;
+      --clr-text-muted: #A09BB5;
+      --clr-green: #34D399;
+      --clr-red: #F87171;
+      --clr-star: #FBBF24;
+      --radius: 16px;
+      --shadow: 0 8px 32px rgba(0, 0, 0, .45);
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--clr-bg);
+      color: var(--clr-text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── HEADER ─────────────────────────────────── */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: rgba(15, 13, 26, .82);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-bottom: 1px solid rgba(124, 58, 237, .25);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 1.35rem;
+      background: linear-gradient(135deg, var(--clr-primary-light), var(--clr-accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -.5px;
+    }
+
+    .badge {
+      font-size: .65rem;
+      font-weight: 600;
+      background: linear-gradient(135deg, var(--clr-primary), var(--clr-accent));
+      color: #fff;
+      padding: 3px 10px;
+      border-radius: 20px;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+    }
+
+    /* ── HERO ────────────────────────────────────── */
+    .hero {
+      text-align: center;
+      padding: 48px 20px 32px;
+      position: relative;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(124, 58, 237, .18) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero h1 {
+      font-size: clamp(1.65rem, 4.5vw, 2.6rem);
+      font-weight: 800;
+      line-height: 1.15;
+      margin-bottom: 12px;
+    }
+
+    .hero h1 span {
+      background: linear-gradient(135deg, var(--clr-primary-light), var(--clr-accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      color: var(--clr-text-muted);
+      max-width: 560px;
+      margin: 0 auto 28px;
+      font-size: .95rem;
+      line-height: 1.55;
+    }
+
+    /* ── BUTTONS ─────────────────────────────────── */
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(135deg, var(--clr-primary), var(--clr-accent));
+      color: #fff;
+      border: none;
+      border-radius: 50px;
+      padding: 15px 34px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: transform .2s, box-shadow .25s;
+      box-shadow: 0 4px 24px rgba(124, 58, 237, .45);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 32px rgba(124, 58, 237, .6);
+    }
+
+    .btn-primary:active {
+      transform: scale(.97);
+    }
+
+    .btn-primary .pulse {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--clr-green);
+      animation: pulse 1.6s ease infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        box-shadow: 0 0 0 0 rgba(52, 211, 153, .6);
+      }
+
+      50% {
+        box-shadow: 0 0 0 8px rgba(52, 211, 153, 0);
+      }
+    }
+
+    /* ── STATS BAR ───────────────────────────────── */
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 28px;
+      padding: 0 20px 28px;
+      flex-wrap: wrap;
+    }
+
+    .stat {
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 1.3rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--clr-primary-light), var(--clr-accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .stat-label {
+      font-size: .72rem;
+      color: var(--clr-text-muted);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+
+    /* ── FILTER BAR ──────────────────────────────── */
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      padding: 0 16px 20px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      justify-content: center;
+      /* Center initially if few items */
+    }
+
+    .filter-bar::-webkit-scrollbar {
+      display: none;
+    }
+
+    @media (max-width: 600px) {
+      .filter-bar {
+        justify-content: flex-start;
+      }
+    }
+
+    .filter-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--clr-surface);
+      border: 1px solid rgba(124, 58, 237, .15);
+      color: var(--clr-text-muted);
+      padding: 8px 16px;
+      border-radius: 50px;
+      font-size: .78rem;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all .2s;
+    }
+
+    .filter-chip:hover,
+    .filter-chip.active {
+      background: rgba(124, 58, 237, .18);
+      border-color: var(--clr-primary-light);
+      color: var(--clr-text);
+    }
+
+    /* ── MAP ─────────────────────────────────────── */
+    .map-wrapper {
+      margin: 0 16px 24px;
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid rgba(124, 58, 237, .2);
+      box-shadow: var(--shadow);
+      position: relative;
+    }
+
+    #map {
+      height: 50vh;
+      min-height: 340px;
+      width: 100%;
+      background: var(--clr-surface);
+    }
+
+    .map-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 600;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(15, 13, 26, .7);
+      backdrop-filter: blur(6px);
+      pointer-events: none;
+      transition: opacity .4s;
+    }
+
+    .map-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid rgba(167, 139, 250, .25);
+      border-top-color: var(--clr-primary-light);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      margin-bottom: 12px;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* ── CARDS ───────────────────────────────────── */
+    .cards-section {
+      padding: 8px 16px 32px;
+    }
+
+    .cards-grid {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    }
+
+    .card {
+      background: var(--clr-surface);
+      border: 1px solid rgba(124, 58, 237, .12);
+      border-radius: var(--radius);
+      padding: 20px;
+      transition: transform .2s, box-shadow .25s, border-color .25s;
+      cursor: pointer;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 28px rgba(124, 58, 237, .18);
+      border-color: rgba(124, 58, 237, .35);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 8px;
+    }
+
+    .card-name {
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    .card-status {
+      font-size: .68rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: .3px;
+      white-space: nowrap;
+    }
+
+    .card-status.clean {
+      background: rgba(52, 211, 153, .15);
+      color: var(--clr-green);
+    }
+
+    .card-status.dirty {
+      background: rgba(248, 113, 113, .15);
+      color: var(--clr-red);
+    }
+
+    .card-stars {
+      display: flex;
+      gap: 3px;
+      margin-bottom: 8px;
+    }
+
+    .card-stars .star {
+      color: #3a3650;
+      font-size: .95rem;
+    }
+
+    .card-stars .star.filled {
+      color: var(--clr-star);
+    }
+
+    /* Amenity Tags */
+    .amenity-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 10px 0;
+    }
+
+    .amenity-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: .68rem;
+      font-weight: 500;
+      padding: 4px 10px;
+      border-radius: 8px;
+      background: rgba(124, 58, 237, .12);
+      color: var(--clr-text-muted);
+      border: 1px solid rgba(255, 255, 255, .06);
+    }
+
+    .amenity-tag.available {
+      background: rgba(52, 211, 153, .1);
+      color: var(--clr-green);
+      border-color: rgba(52, 211, 153, .2);
+    }
+
+    /* Rate Button */
+    .btn-rate {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: var(--clr-surface-2);
+      border: 1px solid rgba(124, 58, 237, .2);
+      color: var(--clr-primary-light);
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: .85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+      margin-top: 12px;
+    }
+
+    .btn-rate:hover {
+      background: rgba(124, 58, 237, .2);
+      border-color: var(--clr-primary-light);
+    }
+
+    /* ── MODAL ───────────────────────────────────── */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      background: rgba(0, 0, 0, .6);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .3s;
+      padding: 20px;
+    }
+
+    .modal-backdrop.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal {
+      background: var(--clr-surface);
+      border: 1px solid rgba(124, 58, 237, .2);
+      border-radius: var(--radius);
+      padding: 24px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, .5);
+      transform: translateY(20px);
+      transition: transform .3s;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-backdrop.show .modal {
+      transform: translateY(0);
+    }
+
+    .modal-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .modal-subtitle {
+      font-size: .85rem;
+      color: var(--clr-text-muted);
+      margin-bottom: 20px;
+    }
+
+    /* Rating Rows */
+    .rate-category {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, .05);
+    }
+
+    .rate-stars .star-btn {
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      color: #3a3650;
+      cursor: pointer;
+      padding: 0 2px;
+      transition: transform .2s;
+    }
+
+    .rate-stars .star-btn.filled {
+      color: var(--clr-star);
+    }
+
+    /* Toggle Switch */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, .05);
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      background: var(--clr-surface-3);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background .25s;
+    }
+
+    .toggle-switch.on {
+      background: var(--clr-primary);
+    }
+
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 20px;
+      height: 20px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform .25s;
+    }
+
+    .toggle-switch.on::after {
+      transform: translateX(20px);
+    }
+
+    /* Comment Box */
+    .comment-box {
+      width: 100%;
+      background: var(--clr-surface-2);
+      border: 1px solid rgba(255, 255, 255, .1);
+      border-radius: 12px;
+      color: var(--clr-text);
+      padding: 12px;
+      font-family: inherit;
+      font-size: .9rem;
+      resize: vertical;
+      min-height: 80px;
+      margin-top: 16px;
+    }
+
+    .comment-box:focus {
+      outline: none;
+      border-color: var(--clr-primary-light);
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 14px;
+      margin-top: 16px;
+      background: linear-gradient(135deg, var(--clr-primary), var(--clr-accent));
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* REVIEWS LIST */
+    .reviews-list {
+      margin-top: 20px;
+      border-top: 1px solid rgba(255, 255, 255, .1);
+      padding-top: 16px;
+    }
+
+    .review-item {
+      background: var(--clr-surface-2);
+      padding: 12px;
+      border-radius: 12px;
+      margin-bottom: 10px;
+      font-size: .85rem;
+      border: 1px solid rgba(255, 255, 255, .05);
+    }
+
+    .review-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      font-size: .75rem;
+      color: var(--clr-text-muted);
+    }
+
+    .review-text {
+      line-height: 1.4;
+    }
+
+    /* ── LEAFLET POPUP ─────────────────────────── */
+    .leaflet-popup-content-wrapper {
+      background: var(--clr-surface) !important;
+      color: var(--clr-text) !important;
+      border-radius: 14px !important;
+      border: 1px solid rgba(124, 58, 237, .2) !important;
+    }
+
+    .leaflet-popup-tip {
+      background: var(--clr-surface) !important;
+    }
+
+    .popup-amenities {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 8px;
+    }
+
+    .popup-amenity {
+      font-size: .65rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(124, 58, 237, .1);
+      color: var(--clr-green);
+    }
+
+    /* ── TOAST ──────────────────────────────────── */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--clr-surface-2);
+      color: var(--clr-text);
+      padding: 12px 24px;
+      border-radius: 12px;
+      z-index: 9999;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .3s, transform .3s;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, .6);
+      border: 1px solid rgba(124, 58, 237, .3);
+    }
+
+    .toast.show {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(-50%) translateY(-4px);
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">
+      <svg width="24" height="24" viewBox="0 0 28 28" fill="none">
+        <circle cx="14" cy="14" r="13" stroke="url(#g1)" stroke-width="2" />
+        <path
+          d="M14 6c-3.3 0-6 2.5-6 5.6 0 4.2 6 10.4 6 10.4s6-6.2 6-10.4C20 8.5 17.3 6 14 6zm0 7.6a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"
+          fill="url(#g1)" />
+        <defs>
+          <linearGradient id="g1" x1="0" y1="0" x2="28" y2="28">
+            <stop stop-color="#A78BFA" />
+            <stop offset="1" stop-color="#EC4899" />
+          </linearGradient>
+        </defs>
+      </svg>
+      SheMap
+    </div>
+    <span class="badge">Hackathon Prototype</span>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <h1>Find <span>Clean & Safe</span><br />Restrooms Nearby</h1>
+    <p>SheMap helps women locate checked restrooms with amenities like nursing rooms, sanitary disposal, and hygiene
+      ratings.</p>
+    <button class="btn-primary" onclick="findToilets()">
+      <span class="pulse"></span> Find Nearby
+    </button>
+  </section>
+
+  <!-- STATS -->
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-value" id="statTotal">—</div>
+      <div class="stat-label">Restrooms</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="statClean">—</div>
+      <div class="stat-label">Clean</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="statAvg">—</div>
+      <div class="stat-label">Avg Rating</div>
+    </div>
+  </div>
+
+  <!-- FILTER BAR -->
+  <div class="filter-bar">
+    <button class="filter-chip active" onclick="setFilter('all', this)">📍 All</button>
+    <button class="filter-chip" onclick="setFilter('clean', this)">✅ Clean Only</button>
+    <button class="filter-chip" onclick="setFilter('water', this)">💧 Water</button>
+    <button class="filter-chip" onclick="setFilter('dustbin', this)">🗑️ Pad Disposal</button>
+    <button class="filter-chip" onclick="setFilter('tissue', this)">🧻 Tissue</button>
+    <button class="filter-chip" onclick="setFilter('nursing', this)">🤱 Nursing Room</button>
+  </div>
+
+  <!-- MAP -->
+  <div class="map-wrapper">
+    <div id="map"></div>
+    <div class="map-overlay" id="mapOverlay">
+      <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+        <circle cx="24" cy="24" r="22" stroke="#A78BFA" stroke-width="2" stroke-dasharray="4 4" opacity=".4" />
+        <path
+          d="M24 12c-5.5 0-10 4.2-10 9.3 0 7 10 17.3 10 17.3s10-10.3 10-17.3C34 16.2 29.5 12 24 12zm0 12.7a3.3 3.3 0 1 1 0-6.6 3.3 3.3 0 0 1 0 6.6z"
+          fill="#A78BFA" opacity=".5" />
+      </svg>
+      <p>Tap "Find Nearby" above to start</p>
+    </div>
+  </div>
+
+  <!-- CARDS SECTION -->
+  <section class="cards-section" id="cardsSection" style="display:none">
+    <div class="cards-grid" id="cardsGrid"></div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>Made with 💜 for the hackathon — SheMap © 2026</footer>
+
+  <!-- RATING MODAL -->
+  <div class="modal-backdrop" id="ratingModal">
+    <div class="modal">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="modal-title">Rate Experience</div>
+        <button onclick="closeModal()"
+          style="background:none;border:none;color:#fff;font-size:1.5rem;cursor:pointer;">&times;</button>
+      </div>
+      <div class="modal-subtitle" id="modalToiletName">--</div>
+
+      <!-- Stars -->
+      <div class="rate-category">
+        <span>🧹 Cleanliness</span>
+        <div class="rate-stars" id="stars-clean"></div>
+      </div>
+      <div class="rate-category">
+        <span>🧼 Hygiene</span>
+        <div class="rate-stars" id="stars-hygiene"></div>
+      </div>
+
+      <!-- Amenities Toggles -->
+      <div class="toggle-row"><span>💧 Water Available</span>
+        <div class="toggle-switch" id="toggle-water" onclick="toggleSwitch('water')"></div>
+      </div>
+      <div class="toggle-row"><span>🗑️ Pad Disposal</span>
+        <div class="toggle-switch" id="toggle-dustbin" onclick="toggleSwitch('dustbin')"></div>
+      </div>
+      <div class="toggle-row"><span>🧻 Tissue Available</span>
+        <div class="toggle-switch" id="toggle-tissue" onclick="toggleSwitch('tissue')"></div>
+      </div>
+      <div class="toggle-row"><span>🤱 Nursing Room</span>
+        <div class="toggle-switch" id="toggle-nursing" onclick="toggleSwitch('nursing')"></div>
+      </div>
+
+      <!-- Comment -->
+      <textarea class="comment-box" id="modalComment" placeholder="Write a review (optional)..."></textarea>
+
+      <button class="btn-submit" onclick="submitRating()">Submit Rating</button>
+
+      <!-- Past Reviews -->
+      <div class="reviews-list" id="modalReviewsList"></div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    /* ─── DATA ──────────────────────────────────── */
+    let map, userMarker, markersLayer;
+    let userLat = null, userLng = null, currentFilter = 'all';
+    let currentRatingId = null;
+    let newRatings = { clean: 0, hygiene: 0 };
+    let newAmenities = { water: false, dustbin: false, tissue: false, nursing: false };
+
+    const toilets = [
+      { id: 1, name: "City Mall Restroom", dLat: 0.003, dLng: 0.004, score: 4.5, clean: 4.6, hygiene: 4.4, amenities: { water: true, dustbin: true, tissue: true, nursing: true }, reviews: [] },
+      { id: 2, name: "Metro Station Facility", dLat: -0.002, dLng: 0.005, score: 3.2, clean: 3.0, hygiene: 3.4, amenities: { water: true, dustbin: false, tissue: false, nursing: false }, reviews: [] },
+      { id: 3, name: "Central Park Washroom", dLat: 0.005, dLng: -0.003, score: 4.8, clean: 4.9, hygiene: 4.7, amenities: { water: true, dustbin: true, tissue: true, nursing: false }, reviews: [] },
+      { id: 4, name: "Bus Stand Public Toilet", dLat: -0.004, dLng: -0.002, score: 2.1, clean: 2.0, hygiene: 2.2, amenities: { water: false, dustbin: false, tissue: false, nursing: false }, reviews: [] },
+      { id: 5, name: "Galaxy Shopping Center", dLat: 0.001, dLng: -0.006, score: 4.0, clean: 4.1, hygiene: 3.9, amenities: { water: true, dustbin: true, tissue: false, nursing: true }, reviews: [] },
+      { id: 6, name: "Railway Station Restroom", dLat: -0.006, dLng: 0.001, score: 3.7, clean: 3.5, hygiene: 3.9, amenities: { water: true, dustbin: true, tissue: false, nursing: false }, reviews: [] },
+      { id: 7, name: "Sunrise Hospital Washroom", dLat: 0.004, dLng: 0.002, score: 4.9, clean: 5.0, hygiene: 4.8, amenities: { water: true, dustbin: true, tissue: true, nursing: true }, reviews: [] },
+      { id: 8, name: "Night Market Toilet", dLat: -0.001, dLng: -0.005, score: 1.8, clean: 1.5, hygiene: 2.1, amenities: { water: false, dustbin: false, tissue: false, nursing: false }, reviews: [] },
+      { id: 9, name: "Community Health Center", dLat: 0.006, dLng: 0.003, score: 4.2, clean: 4.3, hygiene: 4.1, amenities: { water: true, dustbin: true, tissue: true, nursing: true }, reviews: [] },
+      { id: 10, name: "Public Library Restroom", dLat: -0.003, dLng: 0.006, score: 3.5, clean: 3.6, hygiene: 3.4, amenities: { water: true, dustbin: false, tissue: true, nursing: false }, reviews: [] },
+    ];
+
+    /* ─── HELPERS ───────────────────────────────── */
+    function haversine(lat1, lon1, lat2, lon2) {
+      const R = 6371; const dLat = (lat2 - lat1) * Math.PI / 180; const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+    function starsHtml(s, cls = 'star') {
+      return Array(5).fill(0).map((_, i) => `<span class="${cls} ${i < Math.round(s) ? 'filled' : ''}">★</span>`).join('');
+    }
+    function statusHtml(s) {
+      return s >= 4 ? `<span class="card-status clean">✓ Clean</span>` : `<span class="card-status dirty">✗ Issue</span>`;
+    }
+    function toast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    /* ─── MAP & APP LOGIC ───────────────────────── */
+    function findToilets() {
+      document.getElementById('mapOverlay').innerHTML = '<div class="spinner"></div><p>Detecting...</p>';
+      if (!navigator.geolocation) return fallbackLoc();
+
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          userLat = pos.coords.latitude; userLng = pos.coords.longitude;
+          initMap(userLat, userLng);
+          updateUI();
+          document.getElementById('mapOverlay').classList.add('hidden');
+          toast("Location detected!");
+        },
+        err => { fallbackLoc(); }
+      );
+    }
+
+    function fallbackLoc() {
+      userLat = 28.6139; userLng = 77.2090; // Default Delhi
+      initMap(userLat, userLng);
+      updateUI();
+      document.getElementById('mapOverlay').classList.add('hidden');
+      toast("Showing Default Location");
+    }
+
+    function initMap(lat, lng) {
+      if (!map) {
+        map = L.map('map', { zoomControl: false }).setView([lat, lng], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        markersLayer = L.layerGroup().addTo(map);
+        L.marker([lat, lng], {
+          icon: L.divIcon({ className: '', html: `<div style="background:#7C3AED;width:20px;height:20px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 4px rgba(124,58,237,.3)"></div>` })
+        }).addTo(map).bindPopup("You are here");
+      } else {
+        map.setView([lat, lng], 15);
+      }
+    }
+
+    function updateUI() {
+      markersLayer.clearLayers();
+      const grid = document.getElementById('cardsGrid');
+      grid.innerHTML = '';
+
+      // Filter & Sort
+      let list = toilets.map(t => ({
+        ...t,
+        lat: userLat + t.dLat,
+        lng: userLng + t.dLng
+      }));
+
+      if (currentFilter === 'clean') list = list.filter(t => t.score >= 4);
+      if (currentFilter === 'water') list = list.filter(t => t.amenities.water);
+      if (currentFilter === 'dustbin') list = list.filter(t => t.amenities.dustbin);
+      if (currentFilter === 'tissue') list = list.filter(t => t.amenities.tissue);
+      if (currentFilter === 'nursing') list = list.filter(t => t.amenities.nursing);
+
+      list.forEach(t => { t.dist = haversine(userLat, userLng, t.lat, t.lng); });
+      list.sort((a, b) => a.dist - b.dist);
+
+      // Create Markers & Cards
+      list.forEach(t => {
+        // Marker
+        const color = t.score >= 4 ? '#34D399' : '#F87171';
+        L.marker([t.lat, t.lng], {
+          icon: L.divIcon({ className: '', html: `<div style="background:${color};width:30px;height:30px;border-radius:50%;border:2px solid #fff;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(0,0,0,.3)">🚽</div>` })
+        }).addTo(markersLayer).bindPopup(`
+          <div style="font-weight:700">${t.name}</div>
+          <div>${starsHtml(t.score)}</div>
+          <div class="popup-amenities">
+            ${t.amenities.water ? '<span class="popup-amenity">💧 Water</span>' : ''}
+            ${t.amenities.nursing ? '<span class="popup-amenity">🤱 Nursing</span>' : ''}
+          </div>
+        `);
+
+        // Card
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <div class="card-header"><span class="card-name">${t.name}</span>${statusHtml(t.score)}</div>
+          <div class="card-stars">${starsHtml(t.score)}</div>
+          <div style="font-size:.8rem;color:#A09BB5;margin-bottom:8px">
+            📍 ${(t.dist * 1000).toFixed(0)}m away · 🧹 ${t.clean} · 🧼 ${t.hygiene}
+          </div>
+          <div class="amenity-tags">
+            ${t.amenities.water ? '<span class="amenity-tag available">💧 Water</span>' : '<span class="amenity-tag">No Water</span>'}
+            ${t.amenities.dustbin ? '<span class="amenity-tag available">🗑️ Pads Bin</span>' : '<span class="amenity-tag">No Bin</span>'}
+            ${t.amenities.tissue ? '<span class="amenity-tag available">🧻 Tissue</span>' : ''}
+            ${t.amenities.nursing ? '<span class="amenity-tag available">🤱 Nursing</span>' : ''}
+          </div>
+          <button class="btn-rate" onclick="openModal(${t.id})">⭐ Rate & Review</button>
+        `;
+        card.onclick = (e) => {
+          if (!e.target.closest('.btn-rate')) {
+            map.setView([t.lat, t.lng], 16);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        };
+        grid.appendChild(card);
+      });
+
+      // Update Stats
+      document.getElementById('cardsSection').style.display = 'block';
+      document.getElementById('statTotal').innerText = list.length;
+      document.getElementById('statClean').innerText = list.filter(x => x.score >= 4).length;
+      const avg = list.length ? (list.reduce((a, b) => a + b.score, 0) / list.length).toFixed(1) : '-';
+      document.getElementById('statAvg').innerText = avg;
+    }
+
+    function setFilter(f, el) {
+      currentFilter = f;
+      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+      if (userLat) updateUI();
+    }
+
+    /* ─── MODAL LOGIC ───────────────────────────── */
+    function openModal(id) {
+      currentRatingId = id;
+      const t = toilets.find(x => x.id === id);
+      document.getElementById('modalToiletName').innerText = t.name;
+      document.getElementById('ratingModal').classList.add('show');
+
+      // Reset Inputs
+      newRatings = { clean: 0, hygiene: 0 };
+      renderStars('clean'); renderStars('hygiene');
+      ['water', 'dustbin', 'tissue', 'nursing'].forEach(k => {
+        newAmenities[k] = t.amenities[k]; // Default to known state
+        updateToggleUI(k);
+      });
+      document.getElementById('modalComment').value = '';
+
+      // Render Reviews
+      const list = document.getElementById('modalReviewsList');
+      list.innerHTML = t.reviews.length ? '' : '<div style="color:#666;text-align:center">No reviews yet. Be the first!</div>';
+      t.reviews.forEach(r => {
+        list.innerHTML += `
+          <div class="review-item">
+            <div class="review-header"><span>Anonymous User</span><span>${r.date}</span></div>
+            <div class="review-text">${r.text}</div>
+            <div style="margin-top:4px;color:#FBBF24">${'★'.repeat(r.rating)}</div>
+          </div>
+        `;
+      });
+    }
+
+    function closeModal() {
+      document.getElementById('ratingModal').classList.remove('show');
+    }
+
+    function renderStars(cat) {
+      const el = document.getElementById(`stars-${cat}`);
+      el.innerHTML = [1, 2, 3, 4, 5].map(i =>
+        `<button class="star-btn ${i <= newRatings[cat] ? 'filled' : ''}" onclick="rate('${cat}',${i})">★</button>`
+      ).join('');
+    }
+
+    function rate(cat, val) {
+      newRatings[cat] = val;
+      renderStars(cat);
+    }
+
+    function toggleSwitch(key) {
+      newAmenities[key] = !newAmenities[key];
+      updateToggleUI(key);
+    }
+
+    function updateToggleUI(key) {
+      const el = document.getElementById(`toggle-${key}`);
+      if (newAmenities[key]) el.classList.add('on'); else el.classList.remove('on');
+    }
+
+    function submitRating() {
+      const t = toilets.find(x => x.id === currentRatingId);
+      if (newRatings.clean > 0) t.clean = parseFloat(((t.clean + newRatings.clean) / 2).toFixed(1));
+      if (newRatings.hygiene > 0) t.hygiene = parseFloat(((t.hygiene + newRatings.hygiene) / 2).toFixed(1));
+
+      const overall = Math.round((newRatings.clean + newRatings.hygiene) / 2) || t.score;
+      t.score = parseFloat(((t.score + overall) / 2).toFixed(1));
+
+      // Update Amenities
+      t.amenities = { ...newAmenities };
+
+      // Add Comment
+      const text = document.getElementById('modalComment').value;
+      if (text) {
+        t.reviews.unshift({
+          text: text,
+          rating: overall,
+          date: new Date().toLocaleDateString()
+        });
+      }
+
+      toast("✅ Review Submitted!");
+      closeModal();
+      updateUI();
+    }
+  </script>
+</body>
+
+</html>
