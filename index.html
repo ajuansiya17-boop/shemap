@@ -646,6 +646,176 @@
       pointer-events: auto;
       transform: translateX(-50%) translateY(-4px);
     }
+
+    /* ── ADD SPOT BUTTON ────────────────────────── */
+    .btn-add-spot {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: linear-gradient(135deg, rgba(124, 58, 237, .2), rgba(236, 72, 153, .2));
+      border: 1px solid rgba(167, 139, 250, .4);
+      color: var(--clr-primary-light);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: .78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .25s;
+      font-family: inherit;
+    }
+
+    .btn-add-spot:hover {
+      background: linear-gradient(135deg, rgba(124, 58, 237, .35), rgba(236, 72, 153, .35));
+      border-color: var(--clr-primary-light);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(124, 58, 237, .25);
+    }
+
+    .btn-add-spot.active {
+      background: linear-gradient(135deg, var(--clr-primary), var(--clr-accent));
+      color: #fff;
+      border-color: transparent;
+      box-shadow: 0 4px 20px rgba(124, 58, 237, .4);
+    }
+
+    /* ── PIN MODE ───────────────────────────────── */
+    #map.pin-mode {
+      cursor: crosshair !important;
+    }
+
+    #map.pin-mode .leaflet-grab {
+      cursor: crosshair !important;
+    }
+
+    .pin-mode-banner {
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 800;
+      background: linear-gradient(135deg, var(--clr-primary), var(--clr-accent));
+      color: #fff;
+      padding: 8px 20px;
+      border-radius: 20px;
+      font-size: .82rem;
+      font-weight: 600;
+      box-shadow: 0 4px 20px rgba(124, 58, 237, .4);
+      display: none;
+      align-items: center;
+      gap: 8px;
+      animation: fadeSlideDown .3s ease;
+    }
+
+    .pin-mode-banner.show {
+      display: inline-flex;
+    }
+
+    .pin-mode-banner .cancel-pin {
+      background: rgba(255, 255, 255, .2);
+      border: none;
+      color: #fff;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: .72rem;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .pin-mode-banner .cancel-pin:hover {
+      background: rgba(255, 255, 255, .35);
+    }
+
+    @keyframes fadeSlideDown {
+      from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+    }
+
+    /* ── ADD LOCATION MODAL EXTRAS ──────────────── */
+    .add-input {
+      width: 100%;
+      background: var(--clr-surface-2);
+      border: 1px solid rgba(255, 255, 255, .1);
+      border-radius: 12px;
+      color: var(--clr-text);
+      padding: 12px 14px;
+      font-family: inherit;
+      font-size: .9rem;
+      transition: border-color .2s;
+    }
+
+    .add-input:focus {
+      outline: none;
+      border-color: var(--clr-primary-light);
+    }
+
+    .add-input::placeholder {
+      color: var(--clr-text-muted);
+    }
+
+    .coord-display {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--clr-surface-2);
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: .78rem;
+      color: var(--clr-text-muted);
+      margin-bottom: 16px;
+      border: 1px solid rgba(124, 58, 237, .15);
+    }
+
+    .coord-display .coord-icon {
+      font-size: 1.1rem;
+    }
+
+    .coord-display .coord-vals {
+      flex: 1;
+    }
+
+    .coord-display .coord-hint {
+      font-size: .68rem;
+      color: var(--clr-primary-light);
+      opacity: .7;
+    }
+
+    .form-label {
+      font-size: .82rem;
+      font-weight: 600;
+      color: var(--clr-text-muted);
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .btn-cancel {
+      width: 100%;
+      padding: 12px;
+      margin-top: 8px;
+      background: var(--clr-surface-2);
+      color: var(--clr-text-muted);
+      border: 1px solid rgba(255, 255, 255, .1);
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all .2s;
+    }
+
+    .btn-cancel:hover {
+      background: var(--clr-surface-3);
+      color: var(--clr-text);
+    }
   </style>
 </head>
 
@@ -668,7 +838,10 @@
       </svg>
       SheMap
     </div>
-    <span class="badge">Hackathon Prototype</span>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button class="btn-add-spot" id="btnAddSpot" onclick="togglePinMode()">📌 Add Spot</button>
+      <span class="badge">Hackathon Prototype</span>
+    </div>
   </header>
 
   <!-- HERO -->
@@ -704,12 +877,16 @@
     <button class="filter-chip" onclick="setFilter('water', this)">💧 Water</button>
     <button class="filter-chip" onclick="setFilter('dustbin', this)">🗑️ Pad Disposal</button>
     <button class="filter-chip" onclick="setFilter('tissue', this)">🧻 Tissue</button>
-    <button class="filter-chip" onclick="setFilter('nursing', this)">🤱 Nursing Room</button>
+    <button class="filter-chip" onclick="setFilter('breastfeeding', this)">🤱 Nursing Room</button>
   </div>
 
   <!-- MAP -->
   <div class="map-wrapper">
     <div id="map"></div>
+    <div class="pin-mode-banner" id="pinBanner">
+      📌 Tap on the map to drop a pin
+      <button class="cancel-pin" onclick="exitPinMode()">✕ Cancel</button>
+    </div>
     <div class="map-overlay" id="mapOverlay">
       <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
         <circle cx="24" cy="24" r="22" stroke="#A78BFA" stroke-width="2" stroke-dasharray="4 4" opacity=".4" />
@@ -770,6 +947,58 @@
 
       <!-- Past Reviews -->
       <div class="reviews-list" id="modalReviewsList"></div>
+    </div>
+  </div>
+
+  <!-- ADD LOCATION MODAL -->
+  <div class="modal-backdrop" id="addLocationModal">
+    <div class="modal">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="modal-title">📍 Add New Restroom</div>
+        <button onclick="closeAddModal()"
+          style="background:none;border:none;color:#fff;font-size:1.5rem;cursor:pointer;">&times;</button>
+      </div>
+      <div class="modal-subtitle">Drop a pin and fill in the details below</div>
+
+      <!-- Coordinates Display -->
+      <div class="coord-display">
+        <span class="coord-icon">🗺️</span>
+        <div class="coord-vals" id="addCoordDisplay">No location selected</div>
+        <span class="coord-hint">Drag pin to adjust</span>
+      </div>
+
+      <!-- Name -->
+      <div class="form-group">
+        <label class="form-label">Restroom Name</label>
+        <input type="text" class="add-input" id="addName" placeholder="e.g. City Mall Restroom" />
+      </div>
+
+      <!-- Stars -->
+      <div class="rate-category">
+        <span>🧹 Cleanliness</span>
+        <div class="rate-stars" id="add-stars-clean"></div>
+      </div>
+      <div class="rate-category">
+        <span>🧼 Hygiene</span>
+        <div class="rate-stars" id="add-stars-hygiene"></div>
+      </div>
+
+      <!-- Amenities Toggles -->
+      <div class="toggle-row"><span>💧 Water Available</span>
+        <div class="toggle-switch" id="add-toggle-water" onclick="toggleAddAmenity('water')"></div>
+      </div>
+      <div class="toggle-row"><span>🗑️ Pad Disposal</span>
+        <div class="toggle-switch" id="add-toggle-dustbin" onclick="toggleAddAmenity('dustbin')"></div>
+      </div>
+      <div class="toggle-row"><span>🧻 Tissue Available</span>
+        <div class="toggle-switch" id="add-toggle-tissue" onclick="toggleAddAmenity('tissue')"></div>
+      </div>
+      <div class="toggle-row"><span>🤱 Nursing Room</span>
+        <div class="toggle-switch" id="add-toggle-nursing" onclick="toggleAddAmenity('nursing')"></div>
+      </div>
+
+      <button class="btn-submit" onclick="submitNewLocation()">💾 Save Location</button>
+      <button class="btn-cancel" onclick="closeAddModal()">Cancel</button>
     </div>
   </div>
 
@@ -1014,6 +1243,198 @@
       closeModal();
       updateUI();
     }
+
+    /* ─── PIN-DROP ADD LOCATION ─────────────────── */
+    let pinMode = false;
+    let pinMarker = null;
+    let pinLat = null, pinLng = null;
+    let addRatings = { clean: 0, hygiene: 0 };
+    let addAmenities = { water: false, dustbin: false, tissue: false, nursing: false };
+
+    function togglePinMode() {
+      if (!map || userLat === null) {
+        toast('⚠️ Please click "Find Nearby" first to load the map.');
+        return;
+      }
+      if (pinMode) {
+        exitPinMode();
+      } else {
+        enterPinMode();
+      }
+    }
+
+    function enterPinMode() {
+      pinMode = true;
+      document.getElementById('map').classList.add('pin-mode');
+      document.getElementById('btnAddSpot').classList.add('active');
+      document.getElementById('pinBanner').classList.add('show');
+      // Scroll to map
+      const mapEl = document.querySelector('.map-wrapper');
+      window.scrollTo({ top: mapEl.offsetTop - 80, behavior: 'smooth' });
+    }
+
+    function exitPinMode() {
+      pinMode = false;
+      document.getElementById('map').classList.remove('pin-mode');
+      document.getElementById('btnAddSpot').classList.remove('active');
+      document.getElementById('pinBanner').classList.remove('show');
+      if (pinMarker) {
+        map.removeLayer(pinMarker);
+        pinMarker = null;
+      }
+      pinLat = null;
+      pinLng = null;
+    }
+
+    function onMapClick(e) {
+      if (!pinMode) return;
+      pinLat = e.latlng.lat;
+      pinLng = e.latlng.lng;
+
+      // Remove old pin if exists
+      if (pinMarker) map.removeLayer(pinMarker);
+
+      // Create draggable pin
+      pinMarker = L.marker([pinLat, pinLng], {
+        draggable: true,
+        icon: L.divIcon({
+          className: '',
+          html: `<div style="
+            width:40px;height:40px;border-radius:50%;
+            background:linear-gradient(135deg,#7C3AED,#EC4899);
+            display:flex;align-items:center;justify-content:center;
+            box-shadow:0 4px 16px rgba(124,58,237,.5);border:3px solid #fff;
+            animation: bounce-in .35s cubic-bezier(.34,1.56,.64,1);
+          ">📌</div>
+          <style>@keyframes bounce-in{from{transform:scale(0) translateY(-20px)}to{transform:scale(1) translateY(0)}}</style>`,
+          iconSize: [40, 40],
+          iconAnchor: [20, 40]
+        })
+      }).addTo(map);
+
+      // Update coords on drag
+      pinMarker.on('dragend', function (ev) {
+        const pos = ev.target.getLatLng();
+        pinLat = pos.lat;
+        pinLng = pos.lng;
+        updateAddCoordDisplay();
+      });
+
+      // Hide pin banner and open modal
+      document.getElementById('pinBanner').classList.remove('show');
+      openAddModal();
+    }
+
+    function openAddModal() {
+      // Reset form
+      document.getElementById('addName').value = '';
+      addRatings = { clean: 0, hygiene: 0 };
+      addAmenities = { water: false, dustbin: false, tissue: false, nursing: false };
+      renderAddStars('clean');
+      renderAddStars('hygiene');
+      ['water', 'dustbin', 'tissue', 'nursing'].forEach(k => {
+        document.getElementById(`add-toggle-${k}`).classList.remove('on');
+      });
+      updateAddCoordDisplay();
+      document.getElementById('addLocationModal').classList.add('show');
+    }
+
+    function closeAddModal() {
+      document.getElementById('addLocationModal').classList.remove('show');
+      exitPinMode();
+    }
+
+    function updateAddCoordDisplay() {
+      const el = document.getElementById('addCoordDisplay');
+      if (pinLat !== null && pinLng !== null) {
+        el.innerHTML = `<strong>${pinLat.toFixed(5)}</strong>, <strong>${pinLng.toFixed(5)}</strong>`;
+      } else {
+        el.textContent = 'No location selected';
+      }
+    }
+
+    function renderAddStars(cat) {
+      const el = document.getElementById(`add-stars-${cat}`);
+      el.innerHTML = [1, 2, 3, 4, 5].map(i =>
+        `<button class="star-btn ${i <= addRatings[cat] ? 'filled' : ''}" onclick="setAddRating('${cat}',${i})">★</button>`
+      ).join('');
+    }
+
+    function setAddRating(cat, val) {
+      addRatings[cat] = val;
+      renderAddStars(cat);
+    }
+
+    function toggleAddAmenity(key) {
+      addAmenities[key] = !addAmenities[key];
+      const el = document.getElementById(`add-toggle-${key}`);
+      if (addAmenities[key]) el.classList.add('on');
+      else el.classList.remove('on');
+    }
+
+    function submitNewLocation() {
+      const name = document.getElementById('addName').value.trim();
+      if (!name) {
+        toast('⚠️ Please enter a restroom name.');
+        return;
+      }
+      if (pinLat === null || pinLng === null) {
+        toast('⚠️ Please drop a pin on the map first.');
+        return;
+      }
+      if (addRatings.clean === 0 || addRatings.hygiene === 0) {
+        toast('⚠️ Please rate cleanliness and hygiene.');
+        return;
+      }
+
+      // Calculate offset from user location
+      const dLat = pinLat - userLat;
+      const dLng = pinLng - userLng;
+
+      // Create new toilet object
+      const newId = toilets.length > 0 ? Math.max(...toilets.map(t => t.id)) + 1 : 1;
+      const score = parseFloat(((addRatings.clean + addRatings.hygiene) / 2).toFixed(1));
+      const newToilet = {
+        id: newId,
+        name: name,
+        dLat: dLat,
+        dLng: dLng,
+        score: score,
+        clean: addRatings.clean,
+        hygiene: addRatings.hygiene,
+        amenities: { ...addAmenities },
+        reviews: []
+      };
+
+      toilets.push(newToilet);
+      closeAddModal();
+      updateUI();
+      toast('✅ New restroom added successfully!');
+
+      // Pan to new location
+      setTimeout(() => {
+        map.setView([pinLat, pinLng], 16);
+      }, 300);
+    }
+
+    // Attach map click listener once map is initialized
+    const origInitMap = initMap;
+    initMap = function (lat, lng) {
+      origInitMap(lat, lng);
+      if (!map._pinClickBound) {
+        map.on('click', onMapClick);
+        map._pinClickBound = true;
+      }
+    };
+
+    // Close add modal on backdrop click
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('addLocationModal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('addLocationModal')) {
+          closeAddModal();
+        }
+      });
+    });
   </script>
 </body>
 
